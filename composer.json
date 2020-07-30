@@ -1,0 +1,8 @@
+{
+  "type": "application",
+  "description": "Movie reviewer app with neo4j",
+  "require": {
+    "everyman/neo4jphp": "dev-master",
+    "silex/silex": "~1.1"
+  }
+}

@@ -1,0 +1,194 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+      integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+      crossorigin="anonymous"
+    />
+    <title>Neo4j Film Rezensionen</title>
+
+    <style type="text/css">
+      .node {
+        stroke: #222;
+        stroke-width: 1.5px;
+      }
+      .node.actor {
+        fill: #888;
+      }
+      .node.movie {
+        fill: #bbb;
+      }
+      .link {
+        stroke: #999;
+        stroke-opacity: 0.6;
+        stroke-width: 1px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+      <a class="navbar-brand" href="#">Neo4j Film Rezensionen</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarCollapse"
+        aria-controls="navbarCollapse"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto"></ul>
+        <div class="col-sm-12 col-md-12" style="margin-bottom: -15px;">
+          <form role="search" class="navbar-form" id="search">
+            <div class="input-group">
+              <input
+                type="text"
+                placeholder="Suche nach Titel..."
+                class="form-control"
+                name="search"
+              />
+              <div class="input-group-append">
+                <button class="btn btn-outline-light" type="submit">
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </nav>
+    <div class="container-fluid" style="margin-top: 75px;">
+      <div class="row">
+        <div class="col-md-5">
+          <div class="panel panel-default">
+            <table id="results" class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Filmtitel</th>
+                  <th>Erschienen</th>
+                  <th>Beschreibung</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="row">
+            <h4 id="title">-/-</h4>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <div class="card-subtitle mb-2 text-muted">Mitwirkende</div>
+                  <div class="row">
+                    <div class="col-md-12 col-sm-12">
+                      <ul id="crew"></ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <div class="card-subtitle mb-2 text-muted">Rezensionen</div>
+                  <div class="row">
+                    <div class="col-md-12 col-sm-12">
+                      <ul id="reviews"></ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script
+      type="text/javascript"
+      src="//code.jquery.com/jquery-1.11.0.min.js"
+    ></script>
+    <script type="text/javascript">
+      $(function () {
+        function showMovie(title) {
+          $.get(
+            "/movie/" + encodeURIComponent(title),
+            function (data) {
+              if (!data) return;
+              $("#title").text(data.title);
+              var list = $("#crew").empty();
+              var reviews = $("#reviews").empty();
+              data.cast.forEach(function (cast) {
+                if (cast.summary != undefined) {
+                  reviews.append(
+                    "<li>" +
+                      cast.name +
+                      " " +
+                      cast.job +
+                      " with " +
+                      cast.rating +
+                      ". Summary: " +
+                      cast.summary +
+                      "</li>"
+                  );
+                } else {
+                  list.append(
+                    "<li>" +
+                      cast.name +
+                      " " +
+                      cast.job +
+                      (cast.job == "acted" ? " as " + cast.role : "") +
+                      "</li>"
+                  );
+                }
+              });
+            },
+            "json"
+          );
+          return false;
+        }
+        function search() {
+          var query = $("#search").find("input[name=search]").val();
+          $.get(
+            "/search?q=" + encodeURIComponent(query),
+            function (data) {
+              var t = $("table#results tbody").empty();
+              if (!data || data.length == 0) return;
+              data.forEach(function (row) {
+                var movie = row.movie;
+                $(
+                  "<tr><td class='movie'>" +
+                    movie.title +
+                    "</td><td>" +
+                    movie.released +
+                    "</td><td>" +
+                    movie.tagline +
+                    "</td></tr>"
+                )
+                  .appendTo(t)
+                  .click(function () {
+                    showMovie($(this).find("td.movie").text());
+                  });
+              });
+              showMovie(data[0].movie.title);
+            },
+            "json"
+          );
+          return false;
+        }
+
+        $("#search").submit(search);
+        search();
+      });
+    </script>
+  </body>
+</html>
